@@ -38,13 +38,14 @@
 /* USER CODE BEGIN 0 */
 //#include <string.h>
 
-uint8_t button_count = 0;
-uint8_t button_state = 0;
+uint8_t button_count = 0; //счетчик для проверки состояния кнопки
+uint8_t button_state = 0; //состояние кнопки, нажата или нет
 
-uint32_t speed[] = {9600, 14400, 19200, 38400, 115200};
-uint8_t current_speed = 0;
+uint32_t speed[] = {9600, 14400, 19200, 38400, 115200}; //варианты скорости
+uint8_t current_speed = 0; //выбарнная скорость
 uint8_t max_speed = 5;
 
+//печать выбранной скорости
  void choose_speed(void);
 /* USER CODE END 0 */
 
@@ -182,25 +183,26 @@ void SysTick_Handler(void)
   HAL_IncTick();
   HAL_SYSTICK_IRQHandler();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-	if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == 1)
+  //защита от случайного нажатия и продолжительного нажатия
+	if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == 1) //если кнопка нажата
 	{
 			if(button_count < 5)
 			{
-				button_count++;
+				button_count++; 
 			} else {
-				if(button_state == 0)
+				if(button_state == 0) //если прошел счетчик то
 				{
-					button_state = 1;
-					HAL_GPIO_WritePin(GPIOG, GPIO_PIN_13, GPIO_PIN_SET);
+					button_state = 1; //изменить состояние кнопки
+					HAL_GPIO_WritePin(GPIOG, GPIO_PIN_13, GPIO_PIN_SET); //зажечь led, показывающий, что кнопка нажата
 					
-					choose_speed();
+					choose_speed(); //изменить скорость
 				}
 			}				
 	} else {
-			if(button_count > 0)
+			if(button_count > 0) //обнулить счетчик 
 			{
 				button_count--;
-			} else {
+			} else { //изменить состояние кнопки и потушить led
 				button_state = 0;
 				HAL_GPIO_WritePin(GPIOG, GPIO_PIN_13, GPIO_PIN_RESET);
 			}			
@@ -244,18 +246,18 @@ void print_speed(void)
 
  void choose_speed(void)
 {
-	current_speed++;
+	current_speed++; //увеличиваем индекс текущий скорости в массиве, при превышении обнуляем
 	if(current_speed == max_speed)
 	{
 		current_speed = 0;
 	}	
 	
-	HAL_UART_DeInit(&huart1);
-	huart1.Init.BaudRate = speed[current_speed];
-	HAL_UART_Init(&huart1);
-	huart1.RxState = HAL_UART_STATE_BUSY_RX;
+	HAL_UART_DeInit(&huart1); //деинициализируем уарт
+	huart1.Init.BaudRate = speed[current_speed]; //изменяем скорость в структуре
+	HAL_UART_Init(&huart1); //инициализируем
+	huart1.RxState = HAL_UART_STATE_BUSY_RX; //включаем ожидание приема
 	
-	print_speed();
+	print_speed(); //печать измененной скорости
 }
 
 
