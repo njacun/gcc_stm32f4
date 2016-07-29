@@ -53,11 +53,11 @@ SDRAM_HandleTypeDef hsdram1;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-uint16_t max_line = 25;
-uint16_t current_line = 2;
-const uint8_t len_receive = 8;
-const uint8_t len_buffer = 100;
-uint8_t buffer[100];
+uint16_t max_line = 25; //кол-во используемых строчек на дисплее
+uint16_t current_line = 2; //текущая строчка для печати
+const uint8_t len_receive = 8; //длина принимаемого массива
+const uint8_t len_buffer = 100; 
+uint8_t buffer[100]; //буффер
 
 /* USER CODE END PV */
 
@@ -74,15 +74,18 @@ static void MX_SPI5_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
+
+//печать выбранной скорости передачи
 extern void print_speed(void);
 
+//печать массива s на строчку с номером current_line
 void print_string(uint8_t s[len_buffer])
 {
-	BSP_LCD_ClearStringLine(current_line);
-	BSP_LCD_DisplayStringAtLine(current_line, s);
-	current_line++;
+	BSP_LCD_ClearStringLine(current_line); //очистить текущую строку
+	BSP_LCD_DisplayStringAtLine(current_line, s); //напечатать массив
+	current_line++; //взять следующую строку
 
-	if(current_line > max_line)
+	if(current_line > max_line) //если заполнился дисплей - обнуляем, оставляя последнюю строку
 	{
 		current_line = 2;
 		uint8_t i = 2;
@@ -95,23 +98,23 @@ void print_string(uint8_t s[len_buffer])
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
 {
-	if(HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_14) == GPIO_PIN_SET)
+	if(HAL_GPIO_ReadPin(GPIOG, GPIO_PIN_14) == GPIO_PIN_SET) //проверить горит ли led, сообщающий что произошла ошибка
 	{		
-		HAL_GPIO_WritePin(GPIOG, GPIO_PIN_14, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(GPIOG, GPIO_PIN_14, GPIO_PIN_RESET); //обнулить
 	}	
 	
-	print_string(buffer);
-	memset(buffer,0,len_buffer);
+	print_string(buffer); //напечатать пришедшую строку
+	memset(buffer,0,len_buffer); //очистить буфер
 	
-	HAL_UART_Receive_IT(UartHandle, buffer, len_receive);
+	HAL_UART_Receive_IT(UartHandle, buffer, len_receive); //возобновить ожидание приема
 }
 
  void HAL_UART_ErrorCallback(UART_HandleTypeDef *UartHandle)
 {
-	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_14, GPIO_PIN_SET);
-	memset(buffer,0,len_buffer);
+	HAL_GPIO_WritePin(GPIOG, GPIO_PIN_14, GPIO_PIN_SET); //включить светодиод о ошибке
+	memset(buffer,0,len_buffer); //на всякий случай очищаем буфер если принялся какой-то мусор
 	
-	HAL_UART_Receive_IT(UartHandle, buffer, len_receive);
+	HAL_UART_Receive_IT(UartHandle, buffer, len_receive); //возобновить ожидание прием
 }
 /* USER CODE END PFP */
 
@@ -149,6 +152,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  	//инициализация дисплея
 	BSP_LCD_Init();
 	BSP_LCD_LayerDefaultInit(LCD_BACKGROUND_LAYER, LCD_FRAME_BUFFER);
 	BSP_LCD_LayerDefaultInit(LCD_FOREGROUND_LAYER, LCD_FRAME_BUFFER);
@@ -157,10 +161,10 @@ int main(void)
 	BSP_LCD_Clear(LCD_COLOR_WHITE);
 	BSP_LCD_SetFont(&Font12);
 	
-	print_speed();
-	BSP_LCD_DrawLine(0, 18, 240, 18);
+	print_speed(); //напечатать текущую скорость
+	BSP_LCD_DrawLine(0, 18, 240, 18); //нарисовать очертывающую линию линию
 	
-	HAL_UART_Receive_IT(&huart1, buffer, len_receive);
+	HAL_UART_Receive_IT(&huart1, buffer, len_receive); //включить ожидание приема
 	
   while (1)
   {
