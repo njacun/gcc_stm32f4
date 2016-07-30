@@ -115,6 +115,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle)
 	memset(buffer,0,len_buffer); //на всякий случай очищаем буфер если принялся какой-то мусор
 	
 	HAL_UART_Receive_IT(UartHandle, buffer, len_receive); //возобновить ожидание прием
+	
+	/*сбросить счетчик принятого, и смещенный указатель буфера. т.к. при реконфигурации это не сбрасывалось 
+	и получалась ошибка, если выставлена отличная от платы скорость при отправке: следующая передача, после ошибочной
+	принималась криво*/
+	UartHandle -> RxXferCount = UartHandle -> RxXferSize;
+	UartHandle -> pRxBuffPtr = buffer; 
 }
 /* USER CODE END PFP */
 
